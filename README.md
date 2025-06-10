@@ -1,6 +1,6 @@
 # LiquidGlass
 
-> **Real‑time frosted glass and liquid‑like refraction for any SwiftUI or UIKit view – no screenshots, no boilerplate.**
+> **Real‑time frosted glass and liquid‑like refraction for any SwiftUI – no screenshots, no boilerplate.**
 
 <p align="center">
   <img src="Docs/preview.gif" alt="LiquidGlass demo" width="640" />
