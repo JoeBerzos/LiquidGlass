@@ -1,14 +1,8 @@
-# LiquidGlass
-
 <p align="center">
-  <img src="Docs/logo.png" width="240" alt="LiquidGlass logo" />
+  <img src="Docs/Logo.png" width="380" alt="LiquidGlass logo" />
 </p>
 
 > **Real‑time frosted glass and liquid‑like refraction for any SwiftUI view – no screenshots, no boilerplate.**
-
-<p align="center">
-  <img src="Docs/preview.gif" alt="LiquidGlass demo" width="640" />
-</p>
 
 <p align="center">
   <a href="https://swiftpackageindex.com/YourOrg/LiquidGlassSwift"><img src="https://img.shields.io/badge/Swift_Package-Compatible-5E5E5E?style=for-the-badge&logo=swift"/></a>
@@ -43,30 +37,16 @@ Select ***LiquidGlassSwift*** and you’re done.
 ## 🚀 Quick start (SwiftUI)
 
 ```swift
-struct GlassButton: View {
-    var body: some View {
-        Button {
-            print("Tapped")
-        } label: {
-            Label("Play", systemImage: "play.fill")
-                .padding(.horizontal, 24)
-                .padding(.vertical, 12)
-        }
-        .background(
-            RoundedRectangle(cornerRadius: 32)
-                .liquidGlassBackground()          // << here
-        )
-        .liquidGlassUpdateMode(.continuous(interval: 0.1))
-    }
-}
+Button("Glass Text") { }
+    .liquidGlassBackground(cornerRadius: 60)
 ```
 
 ## 🖼 Example
 
-<p align="center">
-  <img src="Docs/example.gif" width="640" alt="LiquidGlass live example" />
-</p>
-
+<table>
+<tr>
+<td width="50%">
+  
 ```swift
 ZStack {
     AnimatedColorsMeshGradientView()
@@ -86,6 +66,13 @@ ZStack {
     }
 }
 ```
+</td>
+
+<td width="50%" align="center">
+  <img src="Docs/Example.gif" width="340" alt="LiquidGlass live example" />
+</td>
+</tr>
+</table>
 
 ## ⚙️ Update modes
 
@@ -120,12 +107,9 @@ Via **SwiftUI**:
 > **The glass doesn’t update when I scroll.**  
 > Use `.continuous(interval: 0.016)` (≈60 fps) or trigger `.manual`’s `invalidate()` in `scrollViewDidScroll`.
 
-> **Can I use it on macOS?**  
-> Camera‑ready! The provider uses UIKit APIs, so a macOS port would need `NSImage` + `CALayer.render(in:)`.
-
 ## 🛡 License
 
-MIT © 2025 • Your Name / YourOrg
+MIT © 2025 • BarredEwe / Prefire
 
 ---
 
