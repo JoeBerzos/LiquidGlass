@@ -93,7 +93,6 @@ Via **SwiftUI**:
 * **Fragment shader** – tweak `Sources/LiquidGlass/Shaders/LiquidGlassShader.metal` to adjust blur radius, refraction strength, tint or chromatic aberration. Two editable functions:
   * `sampleBackground()` – distort UVs / add ripple
   * `postProcess()` – lift saturation, add tint, vignette, bloom.
-* **Blur margin** – `blurMargin` controls how many extra pixels the snapshot grabs around the glass (avoid edge streaks for strong blur).
 * **Performance knobs** – lower snapshot interval, switch to `.once`, or optimise shader loops.
 
 ## 📈 Performance notes
