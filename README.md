@@ -17,7 +17,7 @@
 
 |                              |                                                                                                    |
 | ---------------------------- | -------------------------------------------------------------------------------------------------- |
-| 🔍 **Zero screenshots**      | Background is captured automatically – just drop `LiquidGlassView` on any view.           |
+| 🔍 **Zero screenshots**      | Background is captured automatically – just drop `liquidGlassBackground` on any view.           |
 | ⚡ **Real‑time**              | Optimised `MTLTexture` snapshots + lazy redraw; redraws only when the background actually changes. |
 | 🛠 **Flexible update modes** | `.continuous`, `.once`, `.manual` via the `updateMode` modifier.                    |
 | 🧩 **Pure SwiftUI**          | Works seamlessly in both worlds.                                                                   |
