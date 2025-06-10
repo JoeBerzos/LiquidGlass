@@ -25,14 +25,14 @@
 
 ## 🛠 Installation
 
-Add *LiquidGlassSwift* through Swift Package Manager:
+Add *LiquidGlass* through Swift Package Manager:
 
 ```text
-https://github.com/YourOrg/LiquidGlassSwift.git
+https://github.com/BarredEwe/LiquidGlass.git
 ```
 
 Or via **Xcode » Package Dependencies…**
-Select ***LiquidGlassSwift*** and you’re done.
+Select ***LiquidGlass*** and you’re done.
 
 ## 🚀 Quick start (SwiftUI)
 
@@ -90,7 +90,7 @@ Via **SwiftUI**:
 
 ## 🎨 Shader & Customisation
 
-* **Fragment shader** – tweak `Sources/LiquidGlassSwift/Shaders/LiquidGlassShader.metal` to adjust blur radius, refraction strength, tint or chromatic aberration. Two editable functions:
+* **Fragment shader** – tweak `Sources/LiquidGlass/Shaders/LiquidGlassShader.metal` to adjust blur radius, refraction strength, tint or chromatic aberration. Two editable functions:
   * `sampleBackground()` – distort UVs / add ripple
   * `postProcess()` – lift saturation, add tint, vignette, bloom.
 * **Blur margin** – `blurMargin` controls how many extra pixels the snapshot grabs around the glass (avoid edge streaks for strong blur).
