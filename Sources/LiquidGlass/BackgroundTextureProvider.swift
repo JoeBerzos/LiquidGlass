@@ -103,7 +103,7 @@ public final class BackgroundTextureProvider {
             let cg = ctx.cgContext
             cg.translateBy(x: -rect.origin.x, y: -rect.origin.y)
 
-            var target: CALayer  = glass.layer
+            var target: CALayer = glass.layer
 
             var chain: [CALayer] = []
             while target !== window.layer {

@@ -4,24 +4,16 @@ import MetalKit
 import simd
 
 struct Uniforms {
-    var resolution: SIMD2<Float> // 8 bytes, but aligned to 16
-    var time: Float // 4 bytes
-    var _padding0: Float = 0 // padding to 16 bytes
-
-    var boxSize: SIMD2<Float> // 8 bytes → aligned to 16
-    var cornerRadius: Float // 4 bytes
-    var _padding1: Float = 0 // padding up to 16 bytes
-
-    init(resolution: SIMD2<Float>, time: Float, boxSize: SIMD2<Float>, cornerRadius: Float) {
-        self.resolution = resolution
-        self.time = time
-        self.boxSize = boxSize
-        self.cornerRadius = cornerRadius
-    }
+    var resolution: SIMD2<Float>
+    var time: Float
+    var blurScale: Float
+    var boxSize: SIMD2<Float>
+    var cornerRadius: Float
 }
 
 struct MetalShaderView: UIViewRepresentable {
     let cornerRadius: CGFloat
+    let blurScale: CGFloat
     let updateMode: SnapshotUpdateMode
     
     func makeUIView(context: Context) -> MTKView {
@@ -42,7 +34,7 @@ struct MetalShaderView: UIViewRepresentable {
     }
 
     func makeCoordinator() -> Coordinator {
-        Coordinator(cornerRadius: cornerRadius, updateMode: updateMode)
+        Coordinator(cornerRadius: cornerRadius, updateMode: updateMode, blurScale: blurScale)
     }
 
     class Coordinator: NSObject, MTKViewDelegate {
@@ -57,11 +49,13 @@ struct MetalShaderView: UIViewRepresentable {
         
         let cornerRadius: CGFloat
         let updateMode: SnapshotUpdateMode
+        let blurScale: CGFloat
     
         @MainActor
-        init(cornerRadius: CGFloat, updateMode: SnapshotUpdateMode) {
+        init(cornerRadius: CGFloat, updateMode: SnapshotUpdateMode, blurScale: CGFloat) {
             self.cornerRadius = cornerRadius
             self.updateMode = updateMode
+            self.blurScale = blurScale
             super.init()
 
             device = MTLCreateSystemDefaultDevice()
@@ -100,11 +94,12 @@ struct MetalShaderView: UIViewRepresentable {
             var uniforms = Uniforms(
                 resolution: SIMD2<Float>(Float(view.drawableSize.width), Float(view.drawableSize.height)),
                 time: Float(CFAbsoluteTimeGetCurrent() - startTime),
+                blurScale: Float(blurScale),
                 boxSize: SIMD2<Float>(Float(view.drawableSize.width), Float(view.drawableSize.height)),
                 cornerRadius: Float(cornerRadius)
             )
-            encoder.setVertexBytes(&uniforms, length: MemoryLayout<Uniforms>.size, index: 0)
-            encoder.setFragmentBytes(&uniforms, length: MemoryLayout<Uniforms>.size, index: 0)
+            encoder.setVertexBytes(&uniforms, length: MemoryLayout<Uniforms>.stride, index: 0)
+            encoder.setFragmentBytes(&uniforms, length: MemoryLayout<Uniforms>.stride, index: 0)
 
             let sampler = device.makeSamplerState(descriptor: MTLSamplerDescriptor())!
 
