@@ -15,7 +15,7 @@ public struct LiquidGlassView: View {
         self.cornerRadius = cornerRadius
         self.updateMode = updateMode
         self.blurScale = blurScale
-        self.tintColor = tintColor.cgColor ?? UIColor.clear.cgColor
+        self.tintColor = tintColor.cgColor
     }
 
     public var body: some View {

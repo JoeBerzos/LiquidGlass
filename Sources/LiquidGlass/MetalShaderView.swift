@@ -50,10 +50,10 @@ struct MetalShaderView: UIViewRepresentable {
 
         var backgroundProvider: BackgroundTextureProvider!
         
-        let cornerRadius: CGFloat
-        let updateMode: SnapshotUpdateMode
-        let blurScale: CGFloat
-        let tintColor: CGColor
+        var cornerRadius: CGFloat
+        var updateMode: SnapshotUpdateMode
+        var blurScale: CGFloat
+        var tintColor: CGColor
     
         @MainActor
         init(cornerRadius: CGFloat, updateMode: SnapshotUpdateMode, blurScale: CGFloat, tintColor: CGColor) {

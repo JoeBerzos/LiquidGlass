@@ -43,29 +43,24 @@ float2 randomVec2(float2 co) {
     )) * 43758.5453);
 }
 
-float3 sampleWithNoise(float2 uv, float timeOffset, float mipLevel,
-                       texture2d<float> tex, sampler samp,
-                       constant Uniforms &u) {
-    float2 offset = randomVec2(uv + float2(u.time + timeOffset)) / u.resolution.x;
-    float lod = mipLevel - 1.0;
-    return tex.sample(samp, uv + offset * pow(2.0, mipLevel), level(lod)).rgb;
+float3 stableSample(float2 uv, float timeOffset, float mipLevel,
+                    texture2d<float> tex, sampler samp,
+                    constant Uniforms &u) {
+    float2 jitter = randomVec2(uv + float2(u.time + timeOffset)) * 0.5;
+    float lod = clamp(mipLevel - 1.0, 0.0, 10.0);
+    return tex.sample(samp, uv + jitter / u.resolution.x, level(lod)).rgb;
 }
 
-// Gaussian-ish blur using 9 taps
+// Gaussian-ish blur 
 float3 getBlurredColor(float2 uv, float mipLevel,
                        texture2d<float> tex, sampler samp,
                        constant Uniforms &u) {
-    float3 c = 0.0;
-    c += sampleWithNoise(uv, 0.0, mipLevel, tex, samp, u);
-    c += sampleWithNoise(uv, 0.25, mipLevel, tex, samp, u);
-    c += sampleWithNoise(uv, 0.5, mipLevel, tex, samp, u);
-    c += sampleWithNoise(uv, 0.75, mipLevel, tex, samp, u);
-    c += sampleWithNoise(uv, 1.0, mipLevel, tex, samp, u);
-    c += sampleWithNoise(uv, 1.25, mipLevel, tex, samp, u);
-    c += sampleWithNoise(uv, 1.5, mipLevel, tex, samp, u);
-    c += sampleWithNoise(uv, 1.75, mipLevel, tex, samp, u);
-    c += sampleWithNoise(uv, 2.0, mipLevel, tex, samp, u);
-    return c * (1.0 / 9.0);
+    float3 color = 0.0;
+    for (int i = 0; i < 5; i++) {
+        float t = float(i) * 0.2;
+        color += stableSample(uv, t, mipLevel, tex, samp, u);
+    }
+    return color * 0.2;
 }
 
 // Colour helpers
@@ -93,10 +88,11 @@ float highlight(float sdf) {
 
 // ──────────────────────────────────────────
 // Fragment shader
-fragment float4 liquidGlassFragment(VertexOut in [[stage_in]],
-                                    constant Uniforms& u[[buffer(0)]],
+fragment float4 liquidGlassFragment(VertexOut in               [[stage_in]],
+                                    constant Uniforms &u       [[buffer(0)]],
                                     texture2d<float> iChannel0 [[texture(0)]],
-                                    sampler iChannel0Sampler [[sampler(0)]]) {
+                                    sampler iChannel0Sampler   [[sampler(0)]]) {
+    // Y-flip so snapshot matches UIKit orientation
     float2 uvTex = float2(in.uv.x, 1.0 - in.uv.y);
     float2 fragCoord = uvTex * u.resolution;
     float2 centeredUV = fragCoord - u.resolution * 0.5;
@@ -118,24 +114,23 @@ fragment float4 liquidGlassFragment(VertexOut in [[stage_in]],
 
     // Mix sharp/blurred by blurScale
     float3 mixed = mix(baseTex, blurred, weight);
-    mixed = mix(mixed, pow(saturateColor(mixed, 2.0), float3(0.5)), edgeBlendFactor * weight);
 
-    // Rim-light (чётко по краю)
+    // Rim-light
     mixed += weight * mix(0.0, 0.7, clamp(highlight(normalizedInside) * pow(edgeBlendFactor, 4.0), 0.0, 1.0));
-    
-    // Тонкая цветная вуаль (RGBA)
+
+    // Glass tint
     mixed = mix(mixed, u.tintColor, u.tintAlpha * weight);
 
-    // Тонкая «вуаль» + шум
-    float3 tint = float3(0.96, 0.98, 1.0);
-    mixed = mix(mixed, tint, 0.1 * weight);
+    // Subtle veil + noise
+    float3 veilTint = float3(0.96, 0.98, 1.0);
+    mixed = mix(mixed, veilTint, 0.1 * weight);
 
     float n = randomVec2(uvTex + u.time).x - 0.5;
     mixed += n * 0.03 * weight;
 
     // Inside mask
     float boxMask = 1.0 - clamp(sdf, 0.0, 1.0);
-    float3 final  = mix(baseTex, mixed, float3(boxMask));
+    float3 final = mix(baseTex, mixed, float3(boxMask));
 
     return float4(final, 1.0);
 }
