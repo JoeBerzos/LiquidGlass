@@ -18,13 +18,28 @@ public enum SnapshotUpdateMode {
 /// need to think about screenshots – just add `.liquidGlassBackground()`.
 @MainActor
 public final class BackgroundTextureProvider {
-
-    // MARK: – Public API
     public var updateMode: SnapshotUpdateMode = .continuous() {
         didSet { resetTimer() }
     }
-    
     public var didUpdateTexture: (() -> Void)?
+    
+    private weak var timerTarget: UIView?
+    private let device: MTLDevice
+    private let textureLoader: MTKTextureLoader
+    private var lastCaptureTime: CFAbsoluteTime = 0
+    private var timer: Timer?
+    private var isCapturingSnapshot = false
+    private var cachedTexture: MTLTexture? {
+        didSet {
+            didUpdateTexture?()
+        }
+    }
+    
+    public init(device: MTLDevice) {
+        self.device = device
+        self.textureLoader = MTKTextureLoader(device: device)
+        resetTimer()
+    }
 
     /// Use when `updateMode == .manual` and the layout behind the glass changed.
     public func invalidate() {
@@ -42,29 +57,7 @@ public final class BackgroundTextureProvider {
         return cachedTexture
     }
 
-    // MARK: – Initialisation
-    
-    public init(device: MTLDevice) {
-        self.device = device
-        self.textureLoader = MTKTextureLoader(device: device)
-        resetTimer()
-    }
-    
     // MARK: – Private
-    
-    private let device: MTLDevice
-    private let textureLoader: MTKTextureLoader
-
-    private var cachedTexture: MTLTexture? {
-        didSet {
-            didUpdateTexture?()
-        }
-    }
-    private var lastCaptureTime: CFAbsoluteTime = 0
-
-    private weak var timerTarget: UIView?
-    private var timer: Timer?
-    private var isCapturingSnapshot = false
 
     private func resetTimer() {
         timer?.invalidate()
@@ -103,6 +96,8 @@ public final class BackgroundTextureProvider {
         let img = renderer.image { ctx in
             let cg = ctx.cgContext
             cg.translateBy(x: -rect.origin.x, y: -rect.origin.y)
+            cg.setFillColor((window.backgroundColor ?? .white).cgColor)
+            cg.fill(window.bounds)
 
             var target: CALayer = glass.layer
 

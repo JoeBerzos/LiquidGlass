@@ -9,11 +9,14 @@ struct Uniforms {
     var blurScale: Float
     var boxSize: SIMD2<Float>
     var cornerRadius: Float
+    var tintColor: SIMD3<Float>
+    var tintAlpha: Float
 }
 
 struct MetalShaderView: UIViewRepresentable {
     let cornerRadius: CGFloat
     let blurScale: CGFloat
+    var tintColor: CGColor
     let updateMode: SnapshotUpdateMode
     
     func makeUIView(context: Context) -> MTKView {
@@ -34,7 +37,7 @@ struct MetalShaderView: UIViewRepresentable {
     }
 
     func makeCoordinator() -> Coordinator {
-        Coordinator(cornerRadius: cornerRadius, updateMode: updateMode, blurScale: blurScale)
+        Coordinator(cornerRadius: cornerRadius, updateMode: updateMode, blurScale: blurScale, tintColor: tintColor)
     }
 
     class Coordinator: NSObject, MTKViewDelegate {
@@ -50,12 +53,14 @@ struct MetalShaderView: UIViewRepresentable {
         let cornerRadius: CGFloat
         let updateMode: SnapshotUpdateMode
         let blurScale: CGFloat
+        let tintColor: CGColor
     
         @MainActor
-        init(cornerRadius: CGFloat, updateMode: SnapshotUpdateMode, blurScale: CGFloat) {
+        init(cornerRadius: CGFloat, updateMode: SnapshotUpdateMode, blurScale: CGFloat, tintColor: CGColor) {
             self.cornerRadius = cornerRadius
             self.updateMode = updateMode
             self.blurScale = blurScale
+            self.tintColor = tintColor
             super.init()
 
             device = MTLCreateSystemDefaultDevice()
@@ -96,7 +101,9 @@ struct MetalShaderView: UIViewRepresentable {
                 time: Float(CFAbsoluteTimeGetCurrent() - startTime),
                 blurScale: Float(blurScale),
                 boxSize: SIMD2<Float>(Float(view.drawableSize.width), Float(view.drawableSize.height)),
-                cornerRadius: Float(cornerRadius)
+                cornerRadius: Float(cornerRadius),
+                tintColor: SIMD3<Float>(Float(tintColor.components?[safe: 0] ?? 0), Float(tintColor.components?[safe: 1] ?? 0), Float(tintColor.components?[safe: 2] ?? 0)),
+                tintAlpha: Float(tintColor.components?.last ?? 0)
             )
             encoder.setVertexBytes(&uniforms, length: MemoryLayout<Uniforms>.stride, index: 0)
             encoder.setFragmentBytes(&uniforms, length: MemoryLayout<Uniforms>.stride, index: 0)
@@ -116,6 +123,12 @@ struct MetalShaderView: UIViewRepresentable {
         }
 
         func mtkView(_ view: MTKView, drawableSizeWillChange size: CGSize) {}
+    }
+}
+
+extension Collection {
+    subscript(safe index: Index) -> Element? {
+        indices.contains(index) ? self[index] : nil
     }
 }
 

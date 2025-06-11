@@ -16,6 +16,8 @@ struct Uniforms {
     float blurScale;
     float2 boxSize;
     float cornerRadius;
+    float3 tintColor;
+    float tintAlpha;
 };
 
 // ──────────────────────────────────────────
@@ -95,15 +97,15 @@ fragment float4 liquidGlassFragment(VertexOut in [[stage_in]],
                                     constant Uniforms& u[[buffer(0)]],
                                     texture2d<float> iChannel0 [[texture(0)]],
                                     sampler iChannel0Sampler [[sampler(0)]]) {
-    float2 fragCoord = in.uv * u.resolution;
+    float2 uvTex = float2(in.uv.x, 1.0 - in.uv.y);
+    float2 fragCoord = uvTex * u.resolution;
     float2 centeredUV = fragCoord - u.resolution * 0.5;
     float sdf = boxSDF(centeredUV, u.boxSize, u.cornerRadius);
 
     float normalizedInside = (sdf / u.boxSize.y) + 1.0;
-    float edgeBlendFactor  = pow(normalizedInside, 12.0);
+    float edgeBlendFactor = pow(normalizedInside, 12.0);
 
     // Sharp background
-    float2 uvTex = float2(in.uv.x, 1.0 - in.uv.y);
     float3 baseTex = iChannel0.sample(iChannel0Sampler, uvTex).rgb;
 
     // Blur strength via blurScale
@@ -118,8 +120,18 @@ fragment float4 liquidGlassFragment(VertexOut in [[stage_in]],
     float3 mixed = mix(baseTex, blurred, weight);
     mixed = mix(mixed, pow(saturateColor(mixed, 2.0), float3(0.5)), edgeBlendFactor * weight);
 
-    // Rim light
-    mixed += weight * mix(0.0, 0.5, clamp(highlight(normalizedInside) * pow(edgeBlendFactor, 5.0), 0.0, 1.0));
+    // Rim-light (чётко по краю)
+    mixed += weight * mix(0.0, 0.7, clamp(highlight(normalizedInside) * pow(edgeBlendFactor, 4.0), 0.0, 1.0));
+    
+    // Тонкая цветная вуаль (RGBA)
+    mixed = mix(mixed, u.tintColor, u.tintAlpha * weight);
+
+    // Тонкая «вуаль» + шум
+    float3 tint = float3(0.96, 0.98, 1.0);
+    mixed = mix(mixed, tint, 0.1 * weight);
+
+    float n = randomVec2(uvTex + u.time).x - 0.5;
+    mixed += n * 0.03 * weight;
 
     // Inside mask
     float boxMask = 1.0 - clamp(sdf, 0.0, 1.0);
