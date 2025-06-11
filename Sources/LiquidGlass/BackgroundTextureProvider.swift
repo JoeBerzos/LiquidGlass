@@ -82,40 +82,52 @@ public final class BackgroundTextureProvider {
         defer { isCapturingSnapshot = false }
         
         if let cg = snapshotBehind(view) {
-            return try? textureLoader.newTexture(cgImage: cg, options: [.SRGB: false])
+            return try? textureLoader.newTexture(cgImage: cg, options: [.SRGB: false, .generateMipmaps: true])
         }
         return nil
     }
     
-    @MainActor private func snapshotBehind(_ glass: UIView) -> CGImage? {
+    @MainActor
+    private func snapshotBehind(_ glass: UIView) -> CGImage? {
         guard let window = glass.window else { return nil }
 
         let rect = glass.convert(glass.bounds, to: window)
-
-        let renderer = UIGraphicsImageRenderer(size: rect.size, format: .init())
-        let img = renderer.image { ctx in
+        let img = UIGraphicsImageRenderer(size: rect.size).image { ctx in
             let cg = ctx.cgContext
             cg.translateBy(x: -rect.origin.x, y: -rect.origin.y)
-            cg.setFillColor((window.backgroundColor ?? .white).cgColor)
+            cg.setFillColor((window.backgroundColor ?? .systemBackground).cgColor)
             cg.fill(window.bounds)
 
-            var target: CALayer = glass.layer
-
-            var chain: [CALayer] = []
-            while target !== window.layer {
-                guard let parent = target.superlayer else { break }
-                chain.append(target)
-                target = parent
+            var layers: [CALayer] = []
+            var layer: CALayer = glass.layer
+            while layer !== window.layer, let parent = layer.superlayer {
+                layers.append(layer)
+                layer = parent
             }
-            chain.reverse()
+            layers.reverse()
 
-            var levelParent = window.layer
-            for wanted in chain {
-                guard let idx = levelParent.sublayers?.firstIndex(of: wanted) else { break }
+            var parentLayer = window.layer
+            for wanted in layers {
+                guard let idx = parentLayer.sublayers?.firstIndex(of: wanted) else { break }
+
                 for i in 0..<idx {
-                    levelParent.sublayers?[i].render(in: cg)
+                    guard let sib = parentLayer.sublayers?[i] else { continue }
+
+                    if let frameInWindow = sib.delegate as? UIView {
+                        let f = frameInWindow.convert(frameInWindow.bounds, to: window)
+                        cg.saveGState()
+                        cg.translateBy(x: f.origin.x, y: f.origin.y)
+                        sib.render(in: cg)
+                        cg.restoreGState()
+                    } else {
+                        sib.render(in: cg)
+                    }
                 }
-                levelParent = wanted
+
+                if let wantedView = wanted.delegate as? UIView {
+                    cg.translateBy(x: wantedView.frame.origin.x, y: wantedView.frame.origin.y)
+                }
+                parentLayer = wanted
             }
         }
         return img.cgImage
