@@ -77,6 +77,7 @@ public final class BackgroundTextureProvider {
                     self.lastCaptureTime = CFAbsoluteTimeGetCurrent()
                 }
             }
+            RunLoop.main.add(timer!, forMode: .common)
         case .once, .manual:
             timer = nil
         }
